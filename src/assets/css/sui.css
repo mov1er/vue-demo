@@ -177,7 +177,7 @@ a, input, textarea, select, button {
   outline: 0;
 }
 p {
-  margin: 1em 0;
+  /*margin: 1em 0;*/
 }
 a {
   color: #0894ec;

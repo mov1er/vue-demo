@@ -3,13 +3,13 @@
     v-on:touch-move="onMove"
     v-on:tap="onTap"
   	>
-	  	<div class="detail">
+	  	<div class="index">
 
 			<headerC></headerC>
 			<div class="category">
 				<swipe class="my-swipe" :speed="600" :auto="0">
 				  	<swipe-item class="slide1 box">
-				  		<template v-for="(item,index) in name">
+				  		<template v-for="(item,index) in shopfeat">
 					  		<div class="item" v-if="index<8">
 					  			<a class="item__img"><img :src=item.src alt=""></a>
 					  			<div class="item__title">{{item.title}}</div>
@@ -17,7 +17,7 @@
 				  		</template>
 				 	</swipe-item>
 				  	<swipe-item class="slide2 box">
-				  		<template v-for="(item,index) in name">
+				  		<template v-for="(item,index) in shopfeat">
 					  		<div class="item" v-if="index>7">
 					  			<a class="item__img"><img :src=item.src alt=""></a>
 					  			<div class="item__title">{{item.title}}</div>
@@ -34,10 +34,8 @@
 	     		infinite-scroll-disabled="busy"
 	     		infinite-scroll-distance="60"
 	     		>
-    		
 			
-				<section class="shop-item" v-for="item in shopArray">
-					<!-- <router-link to="/detail"> -->
+				<alloy-finger class="shop-item" v-if="" v-for="(item,index) in shopArray" @tap="toGo(index)">
     					<div class="new"><span>新店</span></div>
 						<div class="left-cont">
 							<img v-bind:src="item.shopimg" alt="">
@@ -72,43 +70,31 @@
 								</div>
 							</div>
 						</div>
-    				<!-- </router-link> -->
 					
-				</section>
+				</alloy-finger>
 			</section>
+			<alloy-finger v-on:tap="toTop">
+				<div class="toTop" id="toTop">
+					<span>顶部</span>
+				</div>
+			</alloy-finger>
 		</div>
 	</alloy-finger>
 	
 </template>
 <script>
 
-	import headerC from './header-component'
-	import fc from './footer-component'
+	import headerC from '../components/index-head'
 	import { Swipe, SwipeItem } from 'vue-swipe'
 	import {mapState} from 'vuex'
+	import {getShopItemList,getFeatItemList} from '../vuex/shopitem/siActions'
 
 	export default{
-		name:'detail',
+		name:'index',
 		data(){
 			return {
-				shopitem:{
-					shopimg:'http://c2.hoopchina.com.cn/uploads/star/event/images/161201/6a22114507f860d25b8f659a63f5f96442ce4ba2.jpg',
-						shopname:'Coco（成都奥克斯店）',
-						shopsup:[
-							'票','保'
-						],
-						shoprate:4.8,
-						shopsale:888,
-						shopdeli:[
-							"蜂鸟专送","准时达"
-						],
-						shopfee:8,
-						delifee:10,
-						distance:"885m",
-						time:38
-				},
-				shopArray:[]
-
+				shopArray:[],
+				shopfeat:[]
 			}
 		},
 		components: {
@@ -117,30 +103,36 @@
 		    'swipe-item': SwipeItem
 		  },
 		created:function(){
-			this.$http.get('./static/1.json').then((response) => {
-				this.shopArray=response.body.slice(0,6)
-		    // success callback
-		  	}, (response) => {
-		    // error callback
-		  	});
 		},
 		computed:{
 			
 		},
 		computed:mapState({
-			name:state=>state.count
+
 		}),
+		beforeMount(){
+
+		},
+		mounted(){
+			this.getListData()
+			.then(()=>{
+				this.shopArray=this.$store.getters.getList.slice(0,6)
+			})
+			this.getFeatData()
+			.then(()=>{
+				this.shopfeat=this.$store.getters.getFeat
+			})
+		},
 		methods: {
       		loadMore: function () {
-      			this.$http.get('./static/1.json').then((response) => {
-			    // success callback
-			    console.log(response.body.slice(0,2))
-			    this.shopitem=response.body.slice(0,2)
-				this.shopArray=this.shopArray.concat(this.shopitem);
-			  	}, (response) => {
-			    // error callback
-			  	});
-      			
+  				if(this.shopArray.length!==0){
+  					var shopitem=[]
+			  	for(var i=0;i<4;i++){
+				    shopitem.push(this.$store.getters.getList[_.random(0, 59)])
+				}
+				this.shopArray=this.shopArray.concat(shopitem)
+  				}
+			  	
 		    },
 		    onTap:function(e){
 		    },
@@ -149,21 +141,74 @@
 		    	var header=document.getElementsByClassName("header")[0];
 		    	if(top>0){
 		    		header.style.position="fixed";
+		    		document.getElementById("toTop").style.display='block'
 		    	}else{
 		    		header.style.position="absolute";
+		    		document.getElementById("toTop").style.display='none'
 		    	}
 		    },
-		    onclick:function(){
-		    	
-		    }    
-    	},
+		    toTop:function(){
+		    	if(document.documentElement.scrollTop)document.documentElement.scrollTop=0
+		    	else document.body.scrollTop=0
+				document.getElementById("toTop").style.display='none'
+		    },
+			toGo:function(index){
+
+				this.$router.push({ name: 'detail', params: { id: index }})
+			},
+			getShopItemList,getFeatItemList,
+			getListData() {
+                return this.getShopItemList()
+                    .then((data) => {
+                        this.$store.dispatch('setList',data)
+                    })
+                    .catch((err) => {
+                         console.log(123132132)
+                    })
+            },
+            getFeatData(){
+            	return this.getFeatItemList()
+                    .then((data) => {
+                        this.$store.dispatch('setFeat',data)
+                    })
+                    .catch((err) => {
+                         console.log(123132132)
+                    })
+            }
+    	}
 
 	}
 	
 	
 </script>
 <style lang="scss" scoped>
-	.detail{
+
+		.toTop{
+			position: fixed;
+			bottom: 2rem;
+			right: .4rem;
+			width: 1.133333rem;
+			height: 1.133333rem;
+			border:1px solid #aaa;
+			border-radius:100%;
+			text-align: center;
+			color: #aaa;
+			display: none;
+			background:rgba(255,255,255,.5);
+			box-shadow: 0 0 10px ;
+			span{
+				line-height: 1.6rem;
+				font-size: 0.2rem;
+			}
+			span::before{
+				content: "^";
+				position:absolute;
+				top:-0.32rem;
+				left: 0.31rem;
+				font-size:.8rem; 
+			}
+		}
+	.index{
 		padding-top: 1.16rem;
 		.my-swipe {
 		  height: 4.72rem;
@@ -216,6 +261,11 @@
 			border-bottom: 1px solid #eee;
 			display: flex;
 			justify-content:space-between;
+			&>a{
+				display: flex;
+				width: 100%;
+				height: 100%;
+			}
 			.left-cont{
 				width: 1.6rem;
 				height: 1.6rem;
@@ -297,7 +347,7 @@
 		    background-color: #fff;
 		    color: #2395ff;
 		    font-size: .266667rem;
-		    line-height: .346667rem;
+		    line-height: .4rem;
 		}
 		.bird{
 			margin-right: .08rem;
@@ -339,4 +389,6 @@
 			font-weight: 700;
 		}
 	}
+
+
 </style>
